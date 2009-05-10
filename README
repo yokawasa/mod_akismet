@@ -20,7 +20,7 @@ It is designed to stand in front of your Apache application handler
 and allow you to check out spam comment post. If it detects spam post,
 it adds spam detected flag to both apache subprocess_env and
 incoming http header table with the key named "akismet_detect_spam".
-Therefore, the spam detected flag can be refered by app handler or
+Therefore, the spam detected flag can be referred by app handler or
 next apache modules.
 
 ====================================================================
