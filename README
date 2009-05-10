@@ -1,0 +1,219 @@
+/*
+ * README
+ * mod_akismet.c - Spam Comments Detector Module for Apache2
+ */
+
+                        __          __   _                     __
+   ____ ___  ____  ____/ /   ____ _/ /__(_)________ ___  ___  / /_
+  / __ `__ \/ __ \/ __  /   / __ `/ //_/ / ___/ __ `__ \/ _ \/ __/
+ / / / / / / /_/ / /_/ /   / /_/ / ,< / (__  ) / / / / /  __/ /_
+/_/ /_/ /_/\____/\__,_/_______,_/_/|_/_/____/_/ /_/ /_/\___/\__/
+                     /_____/
+
+====================================================================
+* Introduction
+====================================================================
+
+mod_akismet is Apache module that enables you to detect spam comments
+before your application handler by Akismet anti-comment-spam service.
+It is designed to stand in front of your Apache application handler
+and allow you to check out spam comment post. If it detects spam post,
+it adds spam detected flag to both apache subprocess_env and
+incoming http header table with the key named "akismet_detect_spam".
+Therefore, the spam detected flag can be refered by app handler or
+next apache modules.
+
+====================================================================
+* Download
+====================================================================
+
+http://code.google.com/p/modakismet/downloads/list
+
+====================================================================
+* Prerequisites
+====================================================================
+
+o WordPress API Key - Akismet API requires an API key which are provided
+  along with accounts to WordPress.com.
+  http://wordpress.com/
+
+  check out the url below for more information on the API key:
+  http://akismet.com/development/api/
+
+o libcurl - needed to compile mod_akismet
+  http://curl.haxx.se/
+
+====================================================================
+* Build and Install
+====================================================================
+
+1) extract files from an archive
+tar zxf modakismet-<VERSION>.tar.gz
+cd modakismet-<VERSION>
+
+2) open Makefile and modify ap_basedir variable
+vi Makefile
+ ap_basedir=/PATH-TO-APACHE-BASE
+
+3) make and install
+make
+sudo make install
+
+====================================================================
+* Configuration Directives
+====================================================================
+
+The mod_akismet use shm and global mutex lock for caching the API Key
+verfirication info, and directives on shm and lock must be specified
+as per-server configuration.
+However, all the other directives may be specified in anywhere like
+Server, VirtualHost, Location, and so on.
+
+Most of configurations are used for Akismet API params, therefore
+better off checking out Akismet API documents as well.
+http://akismet.com/development/api/
+
+
+o AkismetApiCacheShmFile
+    Description: [required] Set filename of shm file for the API Cache.
+    Syntax: AkismetApiCacheShmFile filename
+    Context: server config
+    Status: Extension
+    Module: mod_akismet
+
+o AkismetGlobalLockFile
+    Description: [required] Set filename of global mutex.
+    Syntax: AkismetGlobalLockFile filename
+    Context: server config
+    Status: Extension
+    Module: mod_akismet
+
+o AkismetEnabled
+    Description: [required] Set "On" to enable akismet engine, "Off" to disable.
+    Syntax: AkismetEnabled On/Off
+    Context: server config, virtual host, directory, .htaccess
+    Status: Extension
+    Module: mod_akismet
+
+o AkismetApiKey
+    Description: [required] Set the wordpress API key.
+    Syntax: AkismetApiKey apiKey
+    Context: server config, virtual host, directory, .htaccess
+    Status: Extension
+    Module: mod_akismet
+
+o AkismetBlogURL
+    Description:  [required] Set the front page or home URL of your blog or wiki, etc.
+    Syntax: AkismetBlogURL blogURL
+    Context: server config, virtual host, directory, .htaccess
+    Status: Extension
+    Module: mod_akismet
+
+o AkismetCommentParamKey
+    Description: [required] Set the param key name of the submitted comment.
+    Syntax: AkismetCommentParamKey paramKeyName
+    Context: server config, virtual host, directory, .htaccess
+    Status: Extension
+    Module: mod_akismet
+
+o AkismetCommentAuthorParamKey
+    Description: [optional] Set the param key name of the submitted name with the comment.
+    Syntax: AkismetCommentAuthorParamKey paramKeyName
+    Context: server config, virtual host, directory, .htaccess
+    Status: Extension
+    Module: mod_akismet
+
+o AkismetCommentAuthorEmailParamKey
+    Description: [optional] Set the param key name of submitted email address.
+    Syntax: AkismetCommentAuthorEmailParamKey paramKeyName
+    Context: server config, virtual host, directory, .htaccess
+    Status: Extension
+    Module: mod_akismet
+
+o AkismetCommentAuthorURLParamKey
+    Description: [optional] Set the param key name of the commenter URL.
+    Syntax: AkismetCommentAuthorURLParamKey paramKeyName
+    Context: server config, virtual host, directory, .htaccess
+    Status: Extension
+    Module: mod_akismet
+
+o AkismetCommentPermalinkParamKey
+    Description: [optional] Set the param key name of the permalink of the entry the comment was submitted to.
+    Syntax: AkismetCommentPermalinkParamKey paramKeyName
+    Context: server config, virtual host, directory, .htaccess
+    Status: Extension
+    Module: mod_akismet
+
+====================================================================
+* Sample Configuration
+====================================================================
+
+1) load module
+LoadModule akismet_module modules/mod_akismet.so
+
+2) add shm and lock configuration directives (per-server only!)
+AkismetApiCacheShmFile   "/tmp/akismet_cache.shm"
+AkismetGlobalLockFile    "/tmp/akismet.lock"
+
+3) add Akismet API configuration directives
+AkismetEnabled                    "On"
+AkismetApiKey                     "fxcc21c088f2"
+AkismetBlogURL                    "http://blog.yk55.com"
+AkismetCommentParamKey            "comment"
+AkismetCommentAuthorParamKey      "author"
+AkismetCommentAuthorEmailParamKey "author_email"
+AkismetCommentAuthorURLParamKey   "author_url"
+AkismetCommentPermalinkParamKey   "permalink"
+
+see also: conf/apache_akismet.conf
+
+====================================================================
+* More Configuration
+====================================================================
+
+There are some other configurations like this below. These are
+things that seems no need to be dynamically configured in reloading,
+therefore, statically defined.
+However if need to be modified, do modify and recompile the module!
+
+@ akismet.h
+-------------------------
+/* Akismet API's base domain to be used by mod_akismet */
+#define AKISMET_API_SERVER                 "rest.akismet.com"
+
+/* Akismet API's version to be used by mod_akismet */
+#define AKISMET_API_VERSION                "1.1"
+
+/* Akismet API's Port number */
+#define AKISMET_API_PORT                   "80"
+
+/* Akismet API's key verification method name */
+#define AKISMET_API_METHOD_VERIFY_KEY      "verify-key"
+
+/* Akismet API's spam comment check method name */
+#define AKISMET_API_METHOD_COMMENT_CHECK   "comment-check"
+
+/* The response string that Key-verification method returns if the key is valid */
+#define AKISMET_API_RES_VERIFY_KEY_OK      "valid"
+
+/* The response string that comment-check method returns if the comment is spam */
+#define AKISMET_API_RES_COMMENT_IS_SPAM    "true"
+
+/* HTTP request timeout in milsec */
+#define AKISMET_API_REQ_TIMEOUT            (100)
+
+/* UserAgent name to be used by mod_akismet in requesting to Akismet API */
+#define AKISMET_API_REQ_USERAGENT          "mod_akismet/1.0"
+-------------------------
+
+====================================================================
+* Application Sample
+====================================================================
+
+scripts/comment.php
+
+====================================================================
+* Authors
+====================================================================
+Yoichi Kawasaki <yokawasa@gmail.com>
+

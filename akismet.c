@@ -31,7 +31,8 @@ struct akismet_curl_response{
     size_t size;
 };
 
-size_t akismet_write_response_callback(void *ptr,
+size_t
+ akismet_write_response_callback(void *ptr,
         size_t size, size_t nmemb, void *data)
 {
     register int rsize = 0;
@@ -47,7 +48,8 @@ size_t akismet_write_response_callback(void *ptr,
     return rsize;
 }
 
-int akismet_http_post ( const char *url,
+int
+ akismet_http_post ( const char *url,
         const char *args, char* content, int* ret_code )
 {
     CURL *ch;
@@ -60,11 +62,12 @@ int akismet_http_post ( const char *url,
     curl_global_init(CURL_GLOBAL_ALL);
     ch = curl_easy_init();
     curl_easy_setopt(ch, CURLOPT_URL, url );
+    curl_easy_setopt(ch, CURLOPT_TIMEOUT, AKISMET_API_REQ_TIMEOUT );
     curl_easy_setopt(ch, CURLOPT_POSTFIELDS, args );
     curl_easy_setopt(ch, CURLOPT_POST, 1);
     curl_easy_setopt(ch, CURLOPT_WRITEFUNCTION, akismet_write_response_callback );
     curl_easy_setopt(ch, CURLOPT_WRITEDATA, (void *)&res );
-    curl_easy_setopt(ch, CURLOPT_USERAGENT, "mod_akismet/1.0");
+    curl_easy_setopt(ch, CURLOPT_USERAGENT, AKISMET_API_REQ_USERAGENT);
     // curl execute
     retCode = curl_easy_perform(ch);
     curl_easy_cleanup(ch);
@@ -78,7 +81,8 @@ int akismet_http_post ( const char *url,
     return 0;
 }
 
-char * url_encode( const char *src, char* dst )
+char*
+ url_encode( const char *src, char* dst )
 {
     int s = 0;
     char *ch, *bk;
@@ -112,7 +116,8 @@ char * url_encode( const char *src, char* dst )
     return( buf );
 }
 
-AkismetCode akismet_verify_key(request_rec *r,
+AkismetCode
+ akismet_verify_key(request_rec *r,
             const char *apikey, const char* blogurl)
 {
     int retcode;
@@ -120,6 +125,7 @@ AkismetCode akismet_verify_key(request_rec *r,
     char* apiurl;
     char* args;
     char blogurl_enc[200];
+
     if (!apikey||!blogurl) {
         return AKISMET_BAD_PARAM_ERROR;
     }
@@ -143,8 +149,8 @@ AkismetCode akismet_verify_key(request_rec *r,
     return AKISMET_OK;
 }
 
-AkismetCode akismet_comment_check(request_rec *r,
-            akismet_comment_check_request *acc_req )
+AkismetCode
+ akismet_comment_check(request_rec *r, akismet_comment_check_request *acc_req )
 {
     assert(acc_req);
     if (IS_EMPTY(acc_req->apikey)
@@ -160,11 +166,15 @@ AkismetCode akismet_comment_check(request_rec *r,
     size_t ip_enc_size= (!IS_EMPTY(acc_req->ip)) ? strlen(acc_req->ip) * 2 + 1 : 1;
     size_t ua_enc_size= (!IS_EMPTY(acc_req->ua)) ? strlen(acc_req->ua) * 2 + 1 : 1;
     size_t ref_enc_size= (!IS_EMPTY(acc_req->ref)) ? strlen(acc_req->ref) * 2 + 1 : 1;
+    char blogurl_enc[blogurl_enc_size];
+    char ip_enc[ip_enc_size];
+    char ua_enc[ua_enc_size];
+    char ref_enc[ref_enc_size];
 
-    char blogurl_enc[blogurl_enc_size]; memset(blogurl_enc, 0, blogurl_enc_size);
-    char ip_enc[ip_enc_size]; memset(ip_enc, 0, ip_enc_size);
-    char ua_enc[ua_enc_size]; memset(ua_enc, 0, ua_enc_size);
-    char ref_enc[ref_enc_size]; memset(ref_enc, 0, ref_enc_size);
+    memset(blogurl_enc, 0, blogurl_enc_size);
+    memset(ip_enc, 0, ip_enc_size);
+    memset(ua_enc, 0, ua_enc_size);
+    memset(ref_enc, 0, ref_enc_size);
     memset(api_res_content,0,100);
 
     apiurl = apr_psprintf(r->pool, "http://%s.%s/%s/%s",

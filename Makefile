@@ -27,7 +27,7 @@ clean:
 	-rm -f *.o *.lo *.slo *.la *~ .libs
 #   install and activate shared object by reloading Apache to
 #   force a reload of the shared object file
-reload: install restart
+reload: stop install start
 
 #   the general Apache start/restart/stop
 #   procedures
